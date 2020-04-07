@@ -1,6 +1,6 @@
 # galactic-hero
  
-Simple space shooting game demo
+Simple space shooting game demo.
 Reference from peterhellberg - "https://gist.github.com/peterhellberg/ac9f10c9559bdcc7296a.js"
 
 Use 'up', 'down', 'left' and 'right' to move your character. Press 'space' to shoot. 
