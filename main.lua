@@ -11,14 +11,10 @@ Class = require 'Class'
 require 'Player'
 
 PLAYER_SPEED = 150
-ENEMY_SPEED = 150
 BULLET_SPEED = 250
 
 createEnemyTimerMax = 0.4
 createEnemyTimer = createEnemyTimerMax
-
-isAlive = true
-score = 0
 
 -- called when game starts 
 -- load images, sounds of the game here
@@ -45,6 +41,31 @@ function love.load(arg)
 
     scoreFont = love.graphics.newFont('font.ttf', 32)
     smallFont = love.graphics.newFont('font.ttf', 32)
+
+    sounds = {
+        ['shoot1'] = love.audio.newSource('sfx/shoot1.wav', 'static'),
+        ['shoot2'] = love.audio.newSource('sfx/shoot2.wav', 'static'),
+        ['destroy'] = love.audio.newSource('sfx/destroy.wav', 'static'),
+        ['self_destroy'] = love.audio.newSource('sfx/self_destroy.wav', 'static'),
+        ['music'] = love.audio.newSource('sfx/music.wav', 'static')
+    }
+
+    resetgame()
+end
+
+function resetgame()
+    -- remove all the bullets and enemies from the screen
+    bullets = {}
+    enemies = {}
+    -- reset timers
+    createEnemyTimer = createEnemyTimerMax
+    -- move player to default position
+    player.x = 200
+    player.y = 710
+    -- reset gamestate
+    score = 0
+    difficulty = 0
+    isAlive = true
 end
 
 function love.update(dt)
@@ -72,6 +93,16 @@ function love.update(dt)
         end
     end
 
+    updateGame(dt)
+
+    -- start the background music
+    sounds['music']:setLooping(true)
+    sounds['music']:play()
+    sounds['music']:setVolume(0.6)
+end
+
+function updateGame(dt)
+
     -- keep updating the positions of bullets when shooting
     for i, bullet in ipairs(bullets) do
         bullet.y = bullet.y - (BULLET_SPEED * dt)
@@ -82,27 +113,27 @@ function love.update(dt)
     end
 
     -- time out enemy creation
-    if score <= 5 then
+    if difficulty <= 5 then
         createEnemyTimer = createEnemyTimer - (0.3 * dt)
-    elseif score >= 5 then
+    elseif difficulty >= 5 then
         createEnemyTimer = createEnemyTimer - (1 * dt)
-    elseif score >= 10 then
+    elseif difficulty >= 10 then
         createEnemyTimer = createEnemyTimer - (1.5 * dt)
-    elseif score >= 30 then
+    elseif difficulty >= 30 then
         createEnemyTimer = createEnemyTimer - (2 * dt)
     end
     if createEnemyTimer < 0 then
         createEnemyTimer = createEnemyTimerMax
         -- create an enemy
-        if score < 10 then
+        if difficulty < 10 then
             randomNumber = math.random(10, WIDTH - 10)
             newEnemy = { x = randomNumber, y = -10, img = enemies_image}
             table.insert(enemies, newEnemy)
-        elseif score >= 10 then
+        elseif difficulty >= 10 then
             randomNumber = math.random(10, WIDTH - 100)
             newEnemy = { x = randomNumber, y = -100, img = enemies_image}
             table.insert(enemies, newEnemy)
-        elseif score >= 30 then
+        elseif difficulty >= 30 then
             randomNumber = math.random(10, WIDTH - 300)
             newEnemy = { x = randomNumber, y = -200, img = enemies_image}
             table.insert(enemies, newEnemy)
@@ -128,26 +159,29 @@ function love.update(dt)
     end
 
     -- create bullets when enemies shoot
-    if gamestate == 'play' then
+    if gamestate == 'play' and isAlive == true then
         for i, enemy in ipairs(enemies) do
-            if math.random(1, 10) == 1 and player.x > enemy.x + enemy.img:getHeight() / 2 then
+            if math.random(1, 15) == 1 and player.x > enemy.x + enemy.img:getHeight() / 2 then
                 newBullet2 = {x = enemy.x + enemy.img:getWidth() / 2, 
                              y = enemy.y + enemy.img:getHeight(), img = bulletimage2}
                 table.insert(bullets2, newBullet2)
+                sounds['shoot1']:play()
             end
         end
     end
 
     -- run our collision detection
     -- check if our player shoot down enemies
-    if gamestate == 'play' then
+    if gamestate == 'play' and isAlive == true then
         for i, enemy in ipairs(enemies) do
             for j, bullet in ipairs(bullets) do
                 if CheckCollision(enemy.x, enemy.y, enemy.img:getWidth(), enemy.img:getHeight(),
                     bullet.x, bullet.y, bullet.img:getWidth(), bullet.img:getHeight()) then
                     table.remove(bullets, j)
                     table.remove(enemies, i)
+                    difficulty = difficulty + 1
                     score = score + 1
+                    sounds['destroy']:play()
                 end
             end
             -- check if enemies hit our player
@@ -155,6 +189,7 @@ function love.update(dt)
                         player.x, player.y, player.width, player.height)
             and isAlive == true then
                 table.remove(enemies, i)
+                sounds['self_destroy']:play()
                 isAlive = false
                 gamestate = 'done'
             end
@@ -162,8 +197,8 @@ function love.update(dt)
         -- check if enemies shoot down our player
         for i, bullet2 in ipairs(bullets2) do
             if CheckCollision(player.x, player.y, player.width, player.height,
-                             bullet2.x, bullet2.y, bullet2.img:getWidth(), bullet2.img:getHeight())
-            and isAlive == true then
+                             bullet2.x, bullet2.y, bullet2.img:getWidth(), bullet2.img:getHeight()) then
+                sounds['self_destroy']:play()                
                 isAlive = false
                 gamestate = 'done'
             end
@@ -206,8 +241,8 @@ function love.keypressed(key)
     if gamestate == 'start' and love.keyboard.isDown('return', 'kpenter') then
         gamestate = 'play'
     elseif gamestate == 'done' and love.keyboard.isDown('r') then
-        resetgame()
         gamestate = 'play'
+        resetgame()
     end   
     
     -- create bullets when shooting 
@@ -215,6 +250,7 @@ function love.keypressed(key)
         newBullet = {x = player.x + (player.img:getWidth() / 2), 
                      y = player.y, img = bulletimage}
         table.insert(bullets, newBullet)
+        sounds['shoot2']:play()
     end
 
     love.keyboard.keysPressed[key] = true
@@ -237,7 +273,8 @@ function love.draw(dt)
     elseif gamestate == 'play' then 
         player:render()
     elseif gamestate == 'done' then
-        love.graphics.print("Press 'R' to restart", 75, HEIGHT / 2)
+        love.graphics.printf("Best Score: " .. score, 0, HEIGHT / 2 - 50, WIDTH, 'center')
+        love.graphics.printf("Press 'R' to restart", 0, HEIGHT / 2 - 10, WIDTH, 'center')
     end
     
     love.graphics.setDefaultFilter('nearest', 'nearest')
@@ -285,18 +322,4 @@ function displayScore()
     -- set score font
     love.graphics.setFont(scoreFont)
     love.graphics.print(score, 10, 10)
-end
-
-function resetgame()
-    -- remove all the bullets and enemies from the screen
-    bullets = {}
-    enemies = {}
-    -- reset timers
-    createEnemyTimer = createEnemyTimerMax
-    -- move player to default position
-    player.x = 200
-    player.y = 710
-    -- reset gamestate
-    score = 0
-    isAlive = true
 end
