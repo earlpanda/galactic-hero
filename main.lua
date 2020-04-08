@@ -42,6 +42,8 @@ function love.load(arg)
     scoreFont = love.graphics.newFont('font.ttf', 32)
     smallFont = love.graphics.newFont('font.ttf', 32)
 
+    -- sfx from bfxr.net
+    -- background music credited from PlayOnLoop.com
     sounds = {
         ['shoot1'] = love.audio.newSource('sfx/shoot1.wav', 'static'),
         ['shoot2'] = love.audio.newSource('sfx/shoot2.wav', 'static'),
