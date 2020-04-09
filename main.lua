@@ -23,6 +23,7 @@ function love.load(arg)
     gamestate = 'start'
 
     background = love.graphics.newImage('gfx/milkyway.png')
+    background2 = love.graphics.newImage('gfx/black_hole.png')
 
     -- initialize player
     player = Player(200, 710)
@@ -95,6 +96,12 @@ function love.update(dt)
         end
     end
 
+    if gamestate == 'play' then
+        if difficulty >= 50 then
+            gamestate = 'insane'
+        end
+    end
+
     updateGame(dt)
 
     -- start the background music
@@ -118,11 +125,11 @@ function updateGame(dt)
     if difficulty <= 5 then
         createEnemyTimer = createEnemyTimer - (0.3 * dt)
     elseif difficulty >= 5 then
-        createEnemyTimer = createEnemyTimer - (1 * dt)
+        createEnemyTimer = createEnemyTimer - (0.5 * dt)
     elseif difficulty >= 10 then
-        createEnemyTimer = createEnemyTimer - (1.5 * dt)
+        createEnemyTimer = createEnemyTimer - (1 * dt)
     elseif difficulty >= 30 then
-        createEnemyTimer = createEnemyTimer - (2 * dt)
+        createEnemyTimer = createEnemyTimer - (1.5 * dt)
     end
     if createEnemyTimer < 0 then
         createEnemyTimer = createEnemyTimerMax
@@ -161,9 +168,9 @@ function updateGame(dt)
     end
 
     -- create bullets when enemies shoot
-    if gamestate == 'play' and isAlive == true then
+    if isAlive then
         for i, enemy in ipairs(enemies) do
-            if math.random(1, 15) == 1 and player.x > enemy.x + enemy.img:getHeight() / 2 then
+            if math.random(1, 25) == 1 and player.x > enemy.x + enemy.img:getHeight() / 2 then
                 newBullet2 = {x = enemy.x + enemy.img:getWidth() / 2, 
                              y = enemy.y + enemy.img:getHeight(), img = bulletimage2}
                 table.insert(bullets2, newBullet2)
@@ -174,7 +181,7 @@ function updateGame(dt)
 
     -- run our collision detection
     -- check if our player shoot down enemies
-    if gamestate == 'play' and isAlive == true then
+    if isAlive then
         for i, enemy in ipairs(enemies) do
             for j, bullet in ipairs(bullets) do
                 if CheckCollision(enemy.x, enemy.y, enemy.img:getWidth(), enemy.img:getHeight(),
@@ -263,7 +270,11 @@ function love.draw(dt)
 
     -- set background image
     love.graphics.clear(51/255, 43/255, 68/255, 1)
-    drawBackground()
+    if gamestate == 'insane' then
+        drawBackground2()
+    else
+        drawBackground()
+    end
     
     displayScore()
 
@@ -274,6 +285,8 @@ function love.draw(dt)
         love.graphics.printf("Press Enter to Play!", 0, HEIGHT/2 - 10, WIDTH, 'center')
     elseif gamestate == 'play' then 
         player:render()
+    elseif gamestate == 'insane' then
+        player:render()
     elseif gamestate == 'done' then
         love.graphics.printf("Best Score: " .. score, 0, HEIGHT / 2 - 50, WIDTH, 'center')
         love.graphics.printf("Press 'R' to restart", 0, HEIGHT / 2 - 10, WIDTH, 'center')
@@ -281,7 +294,7 @@ function love.draw(dt)
     
     love.graphics.setDefaultFilter('nearest', 'nearest')
 
-    if gamestate == 'play' then
+    if gamestate == 'play' or gamestate == 'insane' then
         -- draw bullets
         for i, bullet in ipairs(bullets) do 
             love.graphics.draw(bulletimage, bullet.x, bullet.y, 3)
@@ -304,6 +317,15 @@ function drawBackground()
     for i = 0, love.graphics.getWidth() / background:getWidth() do 
         for j = 0, love.graphics.getHeight() / background:getHeight() do
             love.graphics.draw(background, i * background:getWidth(), j * background:getHeight())
+        end
+    end
+end
+
+-- black hole background shared by bytecodeminer on wall.alphacoders.com
+function drawBackground2()
+    for a = 0, love.graphics.getWidth() / background2:getWidth() do 
+        for b = 0, love.graphics.getHeight() / background2:getHeight() do
+            love.graphics.draw(background2, a * background2:getWidth(), b * background2:getHeight())
         end
     end
 end
