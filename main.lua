@@ -97,7 +97,7 @@ function love.update(dt)
     end
 
     if gamestate == 'play' then
-        if difficulty >= 50 then
+        if difficulty >= 54 then
             gamestate = 'insane'
         end
     end
