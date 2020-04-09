@@ -9,5 +9,6 @@ Update:
 - galaxy background
 - enemies AI shooting
 - difficult levels increasing, the higher point you get, the harder the game is
-- sfx and music (not yet)
-- hightscore (not yet)
+- sfx and music
+- best score you got
+- there's also a small special mode that I've put in the game when you reach a certain highscore. Go check for it!
